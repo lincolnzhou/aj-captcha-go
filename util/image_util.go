@@ -142,7 +142,7 @@ func (i *ImageUtil) Base64() (string, error) {
 	}
 
 	//开辟存储空间
-	dist := make([]byte, buf.Cap()+buf.Len())
+	dist := make([]byte, base64.StdEncoding.EncodedLen(buf.Len()))
 	// buff转成base64
 	base64.StdEncoding.Encode(dist, buf.Bytes())
 	return string(dist), nil
