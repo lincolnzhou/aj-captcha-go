@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"math"
+
+	"golang.org/x/image/colornames"
+
 	constant "github.com/TestsLing/aj-captcha-go/const"
 	"github.com/TestsLing/aj-captcha-go/model/vo"
 	"github.com/TestsLing/aj-captcha-go/util"
 	img "github.com/TestsLing/aj-captcha-go/util/image"
-	"golang.org/x/image/colornames"
-	"log"
-	"math"
 )
 
 type BlockPuzzleCaptchaService struct {
@@ -106,7 +108,7 @@ func (b *BlockPuzzleCaptchaService) interferenceByTemplate(backgroundImage *util
 				backgroundImage.VagueImage(backgroundX, backgroundY)
 			}
 
-			//防止数组越界判断
+			// 防止数组越界判断
 			if x == (xLength-1) || y == (yLength-1) {
 				continue
 			}
@@ -114,7 +116,7 @@ func (b *BlockPuzzleCaptchaService) interferenceByTemplate(backgroundImage *util
 			rightOpacity := templateImage.IsOpacity(x+1, y)
 			downOpacity := templateImage.IsOpacity(x, y+1)
 
-			//描边处理，,取带像素和无像素的界点，判断该点是不是临界轮廓点,如果是设置该坐标像素是白色
+			// 描边处理，,取带像素和无像素的界点，判断该点是不是临界轮廓点,如果是设置该坐标像素是白色
 			if (isOpacity && !rightOpacity) || (!isOpacity && rightOpacity) || (isOpacity && !downOpacity) || (!isOpacity && downOpacity) {
 				backgroundImage.RgbaImage.SetRGBA(backgroundX, backgroundY, colornames.White)
 			}
@@ -145,7 +147,7 @@ func (b *BlockPuzzleCaptchaService) cutByTemplate(backgroundImage *util.ImageUti
 				backgroundImage.VagueImage(backgroundX, backgroundY)
 			}
 
-			//防止数组越界判断
+			// 防止数组越界判断
 			if x == (xLength-1) || y == (yLength-1) {
 				continue
 			}
@@ -153,7 +155,7 @@ func (b *BlockPuzzleCaptchaService) cutByTemplate(backgroundImage *util.ImageUti
 			rightOpacity := templateImage.IsOpacity(x+1, y)
 			downOpacity := templateImage.IsOpacity(x, y+1)
 
-			//描边处理，,取带像素和无像素的界点，判断该点是不是临界轮廓点,如果是设置该坐标像素是白色
+			// 描边处理，,取带像素和无像素的界点，判断该点是不是临界轮廓点,如果是设置该坐标像素是白色
 			if (isOpacity && !rightOpacity) || (!isOpacity && rightOpacity) || (isOpacity && !downOpacity) || (!isOpacity && downOpacity) {
 				templateImage.RgbaImage.SetRGBA(x, y, colornames.White)
 				backgroundImage.RgbaImage.SetRGBA(backgroundX, backgroundY, colornames.White)
@@ -215,6 +217,14 @@ func (b *BlockPuzzleCaptchaService) Check(token string, pointJson string) error 
 
 	// 校验两个点是否符合
 	if math.Abs(float64(cachePoint.X-userPoint.X)) <= float64(b.factory.config.BlockPuzzle.Offset) && cachePoint.Y == userPoint.Y {
+		key := util.AesEncrypt(fmt.Sprintf("%s---%s", token, userPointJson), cachePoint.SecretKey)
+		cacheKey := fmt.Sprintf(constant.CodeKeyPrefix, key)
+		data, _ := json.Marshal(vo.EncryptCache{
+			Token: token,
+			Point: pointJson,
+		})
+		b.factory.GetCache().Set(cacheKey, string(data), 600)
+
 		return nil
 	}
 
@@ -228,5 +238,24 @@ func (b *BlockPuzzleCaptchaService) Verification(token string, pointJson string)
 	}
 	codeKey := fmt.Sprintf(constant.CodeKeyPrefix, token)
 	b.factory.GetCache().Delete(codeKey)
+	return nil
+}
+
+func (b *BlockPuzzleCaptchaService) VerificationByEncryptCode(encryptCode string) error {
+	cacheKey := fmt.Sprintf(constant.CodeKeyPrefix, encryptCode)
+	cacheResult := b.factory.GetCache().Get(cacheKey)
+
+	var data vo.EncryptCache
+	err := json.Unmarshal([]byte(cacheResult), &data)
+	if err != nil {
+		return err
+	}
+
+	err = b.Verification(data.Token, data.Point)
+	if err != nil {
+		return err
+	}
+
+	b.factory.GetCache().Delete(cacheKey)
 	return nil
 }

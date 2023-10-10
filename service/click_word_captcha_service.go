@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+
 	constant "github.com/TestsLing/aj-captcha-go/const"
 	"github.com/TestsLing/aj-captcha-go/model/vo"
 	"github.com/TestsLing/aj-captcha-go/util"
 	img "github.com/TestsLing/aj-captcha-go/util/image"
-	"log"
 )
 
 const (
@@ -178,4 +179,8 @@ func (c *ClickWordCaptchaService) randomWordPoint(width int, height int, i int, 
 	}
 	y = util.RandomInt(c.factory.config.ClickWord.FontSize, height-fontSizeHalf)
 	return vo.PointVO{X: x, Y: y}
+}
+
+func (c *ClickWordCaptchaService) VerificationByEncryptCode(encryptCode string) error {
+	panic("implement me")
 }

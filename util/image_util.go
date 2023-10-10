@@ -3,8 +3,6 @@ package util
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/TestsLing/aj-captcha-go/model/vo"
-	"github.com/golang/freetype"
 	"image"
 	"image/color"
 	"image/draw"
@@ -15,6 +13,10 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/golang/freetype"
+
+	"github.com/TestsLing/aj-captcha-go/model/vo"
 )
 
 type ImageUtil struct {
@@ -74,7 +76,7 @@ func (i *ImageUtil) SetText(text string, fontsize int, color color.RGBA) {
 
 	fc := freetype.NewContext()
 	// 设置屏幕每英寸的分辨率
-	//fc.SetDPI(72)
+	// fc.SetDPI(72)
 	// 设置用于绘制文本的字体
 	fc.SetFont(font.GetFont())
 	// 以磅为单位设置字体大小
@@ -101,7 +103,7 @@ func (i *ImageUtil) SetArtText(text string, fontsize int, point vo.PointVO) erro
 
 	fc := freetype.NewContext()
 	// 设置屏幕每英寸的分辨率
-	//fc.SetDPI(72)
+	// fc.SetDPI(72)
 	// 设置用于绘制文本的字体
 	fc.SetFont(font.GetFont())
 	// 以磅为单位设置字体大小
@@ -141,7 +143,7 @@ func (i *ImageUtil) Base64() (string, error) {
 		return "", err
 	}
 
-	//开辟存储空间
+	// 开辟存储空间
 	dist := make([]byte, base64.StdEncoding.EncodedLen(buf.Len()))
 	// buff转成base64
 	base64.StdEncoding.Encode(dist, buf.Bytes())
